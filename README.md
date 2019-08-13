@@ -16,4 +16,4 @@ cmake . & make
 ```
 which will build the static library (.a) and the test program in the bin/ subdirectory. The file CMakeLists.txt can be modified to generate the shared/dynamic library (.so or .dylib) instead of the static one. Check the CMake [documentation](https://cmake.org/cmake/help/v3.0/command/add_library.html).
 ## License
-This software is distributed under the MIT licence, chech the LICENSE.txt file.
+This software is distributed under the MIT license, check the LICENSE.txt file.
