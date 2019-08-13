@@ -46,9 +46,14 @@ enum gnuplot_save_type{
 class GnuplotDriver {
 
 private:
+
+    int id;
+    string commandFileName;
+    string dataFileName;
+
     gnuplot_action_type action; /** @todo driver can be called in "plot" mode or "save mode"**/
-//    gnuplot_save_type saveType; /** \brief if action is GNUPLOT_SAVE plot will be exported in wanted format instead of being displayed**/
-//    string saveName;            /** \brief if action is GNUPLOT_SAVE, file to be exported **/
+    gnuplot_save_type saveType; /** \brief if action is GNUPLOT_SAVE plot will be exported in wanted format instead of being displayed**/
+    string saveName;            /** \brief if action is GNUPLOT_SAVE, file to be exported **/
     ofstream commandFile;       /**< \brief  fstream for gnuplot input file **/
     string plotOptions;         /**< \brief set plot options. Default is "with lines" **/
 
@@ -59,8 +64,10 @@ private:
      */
     void write_command(const string& command);
 
+    void write_action_save();
+
 public:
-    GnuplotDriver(gnuplot_action_type action_type = GNUPLOT_PLOT);
+    GnuplotDriver(gnuplot_action_type action_type = GNUPLOT_PLOT, string fileName = "plot.png", gnuplot_save_type format = GNUPLOT_PNG);
     ~GnuplotDriver();
 
     // functions to set gnuplot properties. Must be called before GnuplotDriver::plot

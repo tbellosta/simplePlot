@@ -18,19 +18,30 @@
 #include <execinfo.h>
 #include <unistd.h>
 
-GnuplotDriver::GnuplotDriver(gnuplot_action_type action_type) {
+GnuplotDriver::GnuplotDriver(gnuplot_action_type action_type, string fileName, gnuplot_save_type format) {
+
+    this->id = rand();
+    this->commandFileName = "/tmp/gnuplotFile" + to_string(this->id) + ".txt";
+    this->dataFileName = "/tmp/tmp_gnuplot_data" + to_string(this->id) + ".txt";
 
     this->action = action_type;
 
-    this->commandFile.open("/tmp/gnuplotFile.txt",ios::trunc);
+    this->commandFile.open(this->commandFileName,ios::trunc);
 
     this->plotOptions = " w l";
+
+    if (fileName == "plot.png" && format == GNUPLOT_EPS) fileName = "plot.eps";
+
+    this->saveName = fileName;
+    this->saveType = format;
+
+    if(this->action == GNUPLOT_SAVE) write_action_save();
 
 }
 
 GnuplotDriver::~GnuplotDriver() {
 
-    this->commandFile.close();
+//    this->commandFile.close();
 
 }
 
@@ -78,7 +89,7 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
 
     // creates (tmp) data file
     ofstream tmp;
-    tmp.open("/tmp/tmp_gnuplot_data.txt", ios::trunc);
+    tmp.open(this->dataFileName, ios::trunc);
 
     for (int i = 0; i < x.size(); ++i) {
         tmp << x[i] << " " << y[i] <<endl;
@@ -87,10 +98,26 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
     tmp.close();
 
     write_command("set nokey"); // hides legend
-    write_command("plot \"/tmp/tmp_gnuplot_data.txt\"" + this->plotOptions);
+    write_command("plot \"" + this->dataFileName + "\"" + this->plotOptions);
 
-    // executes gnuplot
-    execlp("gnuplot","gnuplot","/tmp/gnuplotFile.txt","--persist", (char*) NULL);
+    this->commandFile.close();
+
+    pid_t child = fork();
+    pid_t wpid;
+    int status = 0;
+
+    if(child < 0){
+        cout << "\n\n[ERROR] could not fork process.\n\n" << endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y)");
+    }
+    else if(child == 0){
+        // executes gnuplot
+        execlp("gnuplot","gnuplot",this->commandFileName.c_str(),"--persist", (char*) NULL);
+    }
+    else{
+        //main, wait for child
+        while ((wpid = wait(&status)) > 0);
+    }
 
 }
 
@@ -110,7 +137,7 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
 
     // creates (tmp) data file
     ofstream tmp;
-    tmp.open("/tmp/tmp_gnuplot_data.txt", ios::trunc);
+    tmp.open(this->dataFileName, ios::trunc);
 
     for (int i = 0; i < x0.size(); ++i) {
         tmp << x0[i] << " " << y0[i] << " " << x1[i] << " " << y1[i] <<endl;
@@ -119,9 +146,44 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
     tmp.close();
 
     write_command("set nokey"); // hides legend
-    write_command("plot \"/tmp/tmp_gnuplot_data.txt\" u 1:2" + this->plotOptions + ", '' u 3:4" + this->plotOptions);
+    write_command("plot \"" + this->dataFileName + "\" u 1:2" + this->plotOptions + ", '' u 3:4" + this->plotOptions);
 
-    // executes gnuplot
-    execlp("gnuplot","gnuplot","/tmp/gnuplotFile.txt","--persist", (char*) NULL);
+    this->commandFile.close();
+
+    pid_t child = fork();
+    pid_t wpid;
+    int status = 0;
+
+    if(child < 0){
+        cout << "\n\n[ERROR] could not fork process.\n\n" << endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,\n"
+                                 "                         const vector<double>& x1, const vector<double>& y1)");
+    }
+    else if(child == 0){
+        // executes gnuplot
+        execlp("gnuplot","gnuplot",this->commandFileName.c_str(),"--persist", (char*) NULL);
+    }
+    else{
+        //main, wait for child
+        while ((wpid = wait(&status)) > 0);
+    }
+
+}
+
+void GnuplotDriver::write_action_save() {
+
+    switch(this->saveType){
+        case GNUPLOT_EPS:
+            write_command("set term epscairo");
+            break;
+        case GNUPLOT_PNG:
+            write_command("set term png");
+            break;
+        default:
+            cout<<"\n\n[ERROR] wrong output file type.\n\n"<<endl;
+            throw std::runtime_error("void GnuplotDriver::write_action_save()");
+    }
+
+    write_command("set output \"" + this->saveName + "\"");
 
 }

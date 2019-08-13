@@ -19,13 +19,20 @@ using namespace std;
 
 int main(){
 
-    GnuplotDriver plt;
-
-    plt.setTitle("prova");
-    plt.setTitleFont(20);
-
+    // data
     vector<double> tmp{0,1,2,3,4,5,6,7,8,9,10};
     vector<double> tmp1{10,11,12,13,14,15,16,17,18,19,20};
+
+    // plot graph
+    GnuplotDriver plt;
+    plt.setTitle("prova");
+    plt.setTitleFont(20);
     plt.plot(tmp,tmp,tmp,tmp1);
+
+    // save graph in png format
+    GnuplotDriver save(GNUPLOT_SAVE,"figure.png",GNUPLOT_PNG);
+    save.setTitle("prova");
+    save.setTitleFont(20);
+    save.plot(tmp,tmp,tmp,tmp1);
 
 }
