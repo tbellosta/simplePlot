@@ -25,7 +25,8 @@ using namespace std;
 enum gnuplot_action_type{
 
     GNUPLOT_PLOT,
-    GNUPLOT_SAVE
+    GNUPLOT_SAVE,
+    GNUPLOT_VIDEO
 
 };
 
@@ -57,6 +58,8 @@ private:
     ofstream commandFile;       /**< \brief  fstream for gnuplot input file **/
     string plotOptions;         /**< \brief set plot options. Default is "with lines" **/
 
+    static vector<vector<vector<double>>> videoData;
+
 
     /**
      * writes command in gnuplot input file GnuplotDriver::commandFile.
@@ -64,7 +67,13 @@ private:
      */
     void write_command(const string& command);
 
+    /**
+     * writes lines needed in gnuplot input file for saving the plot.
+     * Sets the right terminal (png or epscairo) and sets the output file.
+     */
     void write_action_save();
+
+    void executeGnuplot();
 
 public:
     GnuplotDriver(gnuplot_action_type action_type = GNUPLOT_PLOT, string fileName = "plot.png", gnuplot_save_type format = GNUPLOT_PNG);
@@ -79,6 +88,8 @@ public:
 
     void plot(const vector<double>& x, const vector<double>& y);
     void plot(const vector<double>& x0, const vector<double>& y0, const vector<double>& x1, const vector<double>& y1);
+
+    void playAnimation(const vector<double> &x, const double &dt = 0.1);
 
 
 };

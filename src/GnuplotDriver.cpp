@@ -1,6 +1,6 @@
 //============================================================
 //
-//      Type:        simplePlot include file
+//      Type:        simplePlot implementation file
 //
 //      Author:      Tommaso Bellosta
 //                   Dipartimento di Scienze e Tecnologie Aerospaziali
@@ -17,6 +17,8 @@
 #include <iostream>
 #include <execinfo.h>
 #include <unistd.h>
+
+vector<vector<vector<double>>> GnuplotDriver::videoData = {};
 
 GnuplotDriver::GnuplotDriver(gnuplot_action_type action_type, string fileName, gnuplot_save_type format) {
 
@@ -87,36 +89,28 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
         throw std::runtime_error("void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y)");
     }
 
-    // creates (tmp) data file
-    ofstream tmp;
-    tmp.open(this->dataFileName, ios::trunc);
+    if(this->action != GNUPLOT_VIDEO) {
+        // creates (tmp) data file
+        ofstream tmp;
+        tmp.open(this->dataFileName, ios::trunc);
 
-    for (int i = 0; i < x.size(); ++i) {
-        tmp << x[i] << " " << y[i] <<endl;
-    }
+        for (int i = 0; i < x.size(); ++i) {
+            tmp << x[i] << " " << y[i] << endl;
+        }
 
-    tmp.close();
+        tmp.close();
 
-    write_command("set nokey"); // hides legend
-    write_command("plot \"" + this->dataFileName + "\"" + this->plotOptions);
+        write_command("set nokey"); // hides legend
+        write_command("plot \"" + this->dataFileName + "\"" + this->plotOptions);
 
-    this->commandFile.close();
+        this->commandFile.close();
 
-    pid_t child = fork();
-    pid_t wpid;
-    int status = 0;
-
-    if(child < 0){
-        cout << "\n\n[ERROR] could not fork process.\n\n" << endl;
-        throw std::runtime_error("void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y)");
-    }
-    else if(child == 0){
-        // executes gnuplot
-        execlp("gnuplot","gnuplot",this->commandFileName.c_str(),"--persist", (char*) NULL);
+        // execute gnuplot
+        executeGnuplot();
     }
     else{
-        //main, wait for child
-        while ((wpid = wait(&status)) > 0);
+        if(this->videoData.empty()) this->videoData = vector<vector<vector<double>>>(1);
+        this->videoData[0].push_back(y);
     }
 
 }
@@ -135,37 +129,31 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
                                  "const vector<double>& x1, const vector<double>& y1)");
     }
 
-    // creates (tmp) data file
-    ofstream tmp;
-    tmp.open(this->dataFileName, ios::trunc);
+    if(this->action != GNUPLOT_VIDEO) {
+        // creates (tmp) data file
+        ofstream tmp;
+        tmp.open(this->dataFileName, ios::trunc);
 
-    for (int i = 0; i < x0.size(); ++i) {
-        tmp << x0[i] << " " << y0[i] << " " << x1[i] << " " << y1[i] <<endl;
-    }
+        for (int i = 0; i < x0.size(); ++i) {
+            tmp << x0[i] << " " << y0[i] << " " << x1[i] << " " << y1[i] << endl;
+        }
 
-    tmp.close();
+        tmp.close();
 
-    write_command("set nokey"); // hides legend
-    write_command("plot \"" + this->dataFileName + "\" u 1:2" + this->plotOptions + ", '' u 3:4" + this->plotOptions);
+        write_command("set nokey"); // hides legend
+        write_command(
+                "plot \"" + this->dataFileName + "\" u 1:2" + this->plotOptions + ", '' u 3:4" + this->plotOptions);
 
-    this->commandFile.close();
+        this->commandFile.close();
 
-    pid_t child = fork();
-    pid_t wpid;
-    int status = 0;
 
-    if(child < 0){
-        cout << "\n\n[ERROR] could not fork process.\n\n" << endl;
-        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,\n"
-                                 "                         const vector<double>& x1, const vector<double>& y1)");
-    }
-    else if(child == 0){
-        // executes gnuplot
-        execlp("gnuplot","gnuplot",this->commandFileName.c_str(),"--persist", (char*) NULL);
+        // execute gnuplot
+        executeGnuplot();
     }
     else{
-        //main, wait for child
-        while ((wpid = wait(&status)) > 0);
+        if(this->videoData.empty()) this->videoData = vector<vector<vector<double>>>(2);
+        this->videoData[0].push_back(y0);
+        this->videoData[1].push_back(y1);
     }
 
 }
@@ -186,4 +174,60 @@ void GnuplotDriver::write_action_save() {
 
     write_command("set output \"" + this->saveName + "\"");
 
+}
+
+void GnuplotDriver::playAnimation(const vector<double> &x, const double &dt) {
+
+    ofstream tmp;
+    tmp.open(this->dataFileName, ios::trunc);
+
+    for (int i = 0; i < x.size(); ++i) {
+        tmp << x[i] << " ";
+        for (int j = 0; j < this->videoData[0].size(); ++j) {
+            for (int k = 0; k < this->videoData.size(); ++k) {
+                tmp << this->videoData[k][j][i] << " ";
+            }
+        }
+        tmp << endl;
+    }
+
+    tmp.close();
+
+    int nCurves = this->videoData.size();
+    int nFrames = this->videoData[0].size();
+
+    write_command("set nokey");
+    write_command("do for [t=2:" + to_string(nFrames+1) + "] {");
+    if (nCurves == 1)
+        write_command("plot \"" + this->dataFileName + "\" u 1:t" + this->plotOptions);
+    else if (nCurves == 2)
+        write_command("plot \"" + this->dataFileName + "\" u 1:2*t-2" + this->plotOptions + ", '' u 1:2*t-1" + this->plotOptions);
+
+    write_command("pause " + to_string(dt));
+
+    write_command("}");
+
+    this->commandFile.close();
+
+    // execute gnuplot
+    executeGnuplot();
+}
+
+void GnuplotDriver::executeGnuplot() {
+
+    pid_t child = fork();
+    pid_t wpid;
+    int status = 0;
+
+    if (child < 0) {
+        cout << "\n\n[ERROR] could not fork process.\n\n" << endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,\n"
+                                 "                         const vector<double>& x1, const vector<double>& y1)");
+    } else if (child == 0) {
+        // executes gnuplot
+        execlp("gnuplot", "gnuplot", this->commandFileName.c_str(), "--persist", (char *) NULL);
+    } else {
+        //main, wait for child
+        while ((wpid = wait(&status)) > 0);
+    }
 }
