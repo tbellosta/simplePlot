@@ -84,6 +84,11 @@ void GnuplotDriver::setTitleFont(const int &size) {
 
 void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
 
+    if(this->action == GNUPLOT_NONE){
+        cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
+        return;
+    }
+
     if(x.size() != y.size()){
         cout<<"\n\n[ERROR] x and y must have same dimension.\n\n"<<endl;
         throw std::runtime_error("void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y)");
@@ -117,6 +122,11 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
 
 void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
                          const vector<double>& x1, const vector<double>& y1) {
+
+    if(this->action == GNUPLOT_NONE){
+        cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
+        return;
+    }
 
     if(x0.size() != y0.size()){
         cout<<"\n\n[ERROR] x0 and y0 must have same dimension.\n\n"<<endl;
@@ -178,6 +188,12 @@ void GnuplotDriver::write_action_save() {
 
 void GnuplotDriver::playAnimation(const vector<double> &x, const double &dt) {
 
+    if(this->action != GNUPLOT_VIDEO){
+        cout << "[WARNING] calling function GnuplotDriver::playAnimation\n"
+                "but gnuplot action is not set to GNUPLOT_VIDEO." << endl;
+        return;
+    }
+
     ofstream tmp;
     tmp.open(this->dataFileName, ios::trunc);
 
@@ -196,8 +212,21 @@ void GnuplotDriver::playAnimation(const vector<double> &x, const double &dt) {
     int nCurves = this->videoData.size();
     int nFrames = this->videoData[0].size();
 
+    // find bounding box for computed data
+    double min = 999;
+    double max = -999;
+    for (int i = 0; i < this->videoData[0].size(); ++i) {
+        for (int j = 0; j < this->videoData[0][i].size(); ++j) {
+            if (this->videoData[0][i][j] < min) min = this->videoData[0][i][j];
+            if (this->videoData[0][i][j] > max) max = this->videoData[0][i][j];
+        }
+    }
+    min -= (max > 0) ? (max*0.05) : (-max*0.05);
+    max += (max > 0) ? (max*0.05) : (-max*0.05);
+
     write_command("set nokey");
     write_command("do for [t=2:" + to_string(nFrames+1) + "] {");
+    write_command("set yrange [" + to_string(min) + " : " + to_string(max) + "]");
     if (nCurves == 1)
         write_command("plot \"" + this->dataFileName + "\" u 1:t" + this->plotOptions);
     else if (nCurves == 2)

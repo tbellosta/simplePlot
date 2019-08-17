@@ -24,6 +24,7 @@ using namespace std;
 
 enum gnuplot_action_type{
 
+    GNUPLOT_NONE,
     GNUPLOT_PLOT,
     GNUPLOT_SAVE,
     GNUPLOT_VIDEO
