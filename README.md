@@ -3,20 +3,22 @@ simplePlot is a simple c++ library that lets you plot 2D graphs using [gnuplot](
 ## Prerequisites
 The only dependecy for simplePlot is [gnuplot](http://gnuplot.sourceforge.net) which can be downloaded from you package manager. For Debian/Ubuntu
 ```
-sudo apt-get install gnuplot
+$ sudo apt-get install gnuplot
 ```
 for macOS
 ```
-brew install gnuplot
+$ brew install gnuplot
 ```
 ## Build
 To build simplePlot you can use CMake to generate the MakeFile:
 ```
-cmake . & make
+$ cmake . 
+$  make
 ```
-which will build the static library (.a) and the test program in the bin/ subdirectory. The file CMakeLists.txt can be modified to generate the shared/dynamic library (.so or .dylib) instead of the static one. Check the CMake [documentation](https://cmake.org/cmake/help/v3.0/command/add_library.html). Alternatively the shared library can be built by passing the following variable to CMake
+which will build the static library (.a) and the test program in the bin/ subdirectory. Alternatively the shared library (.so/.dylib) can be built by passing the following variable to CMake
 ```
-cmake -DBUILD_SHARED_LIBS=ON . & make
+$ cmake -DBUILD_SHARED_LIBS=ON . 
+$  make
 ```
 ## License
 This software is distributed under the MIT license, check the [LICENSE.txt](LICENSE.txt) file.
