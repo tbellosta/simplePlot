@@ -82,6 +82,12 @@ void GnuplotDriver::setTitleFont(const int &size) {
 
 }
 
+string GnuplotDriver::getTitle(const string& str){
+
+    return " title \"" + str + "\"";
+
+}
+
 void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
 
     if(this->action == GNUPLOT_NONE){
@@ -92,6 +98,12 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
     if(x.size() != y.size()){
         cout<<"\n\n[ERROR] x and y must have same dimension.\n\n"<<endl;
         throw std::runtime_error("void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y)");
+    }
+
+    bool noLegend = false;
+    if (this->legendTitles.empty()) {
+        legendTitles = vector<string>(1);
+        noLegend = true;
     }
 
     if(this->action != GNUPLOT_VIDEO) {
@@ -105,8 +117,8 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
 
         tmp.close();
 
-        write_command("set nokey"); // hides legend
-        write_command("plot \"" + this->dataFileName + "\"" + this->plotOptions);
+        if (noLegend) write_command("set nokey"); // hides legend
+        write_command("plot \"" + this->dataFileName + "\"" + this->plotOptions + getTitle(this->legendTitles[0]));
 
         this->commandFile.close();
 
@@ -139,6 +151,12 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
                                  "const vector<double>& x1, const vector<double>& y1)");
     }
 
+    bool noLegend = false;
+    if (this->legendTitles.empty()) {
+        legendTitles = vector<string>(2);
+        noLegend = true;
+    }
+
     if(this->action != GNUPLOT_VIDEO) {
         // creates (tmp) data file
         ofstream tmp;
@@ -150,9 +168,9 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
 
         tmp.close();
 
-        write_command("set nokey"); // hides legend
+        if (noLegend) write_command("set nokey"); // hides legend
         write_command(
-                "plot \"" + this->dataFileName + "\" u 1:2" + this->plotOptions + ", '' u 3:4" + this->plotOptions);
+                "plot \"" + this->dataFileName + "\" u 1:2" + this->plotOptions + getTitle(legendTitles[0]) + ", '' u 3:4" + this->plotOptions + getTitle(legendTitles[1]));
 
         this->commandFile.close();
 
@@ -164,6 +182,139 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
         if(this->videoData.empty()) this->videoData = vector<vector<vector<double>>>(2);
         this->videoData[0].push_back(y0);
         this->videoData[1].push_back(y1);
+    }
+
+}
+
+void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
+                         const vector<double>& x1, const vector<double>& y1,
+                         const vector<double>& x2, const vector<double>& y2) {
+
+    if(this->action == GNUPLOT_NONE){
+        cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
+        return;
+    }
+
+    if(x0.size() != y0.size()){
+        cout<<"\n\n[ERROR] x0 and y0 must have same dimension.\n\n"<<endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0, "
+                                 "const vector<double>& x1, const vector<double>& y1)");
+    }
+    if(x1.size() != y1.size()){
+        cout<<"\n\n[ERROR] x1 and y1 must have same dimension.\n\n"<<endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0, "
+                                 "const vector<double>& x1, const vector<double>& y1)");
+    }
+    if(x2.size() != y2.size()){
+        cout<<"\n\n[ERROR] x2 and y2 must have same dimension.\n\n"<<endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0, "
+                                 "const vector<double>& x1, const vector<double>& y1, "
+                                 "const vector<double>& x2, const vector<double>& y2)");
+    }
+
+    bool noLegend = false;
+    if (this->legendTitles.empty()) {
+        legendTitles = vector<string>(3);
+        noLegend = true;
+    }
+
+    if(this->action != GNUPLOT_VIDEO) {
+        // creates (tmp) data file
+        ofstream tmp;
+        tmp.open(this->dataFileName, ios::trunc);
+
+        for (int i = 0; i < x0.size(); ++i) {
+            tmp << x0[i] << " " << y0[i] << " " << x1[i] << " " << y1[i] << " " << x2[i] << " " << y2[i] << endl;
+        }
+
+        tmp.close();
+
+        if (noLegend) write_command("set nokey"); // hides legend
+        write_command(
+                "plot \"" + this->dataFileName + "\" u 1:2" + this->plotOptions + getTitle(legendTitles[0]) + ", '' u 3:4" + this->plotOptions + getTitle(legendTitles[1]) + ", '' u 5:6" + this->plotOptions + getTitle(legendTitles[2]));
+
+        this->commandFile.close();
+
+
+        // execute gnuplot
+        executeGnuplot();
+    }
+    else{
+        if(this->videoData.empty()) this->videoData = vector<vector<vector<double>>>(3);
+        this->videoData[0].push_back(y0);
+        this->videoData[1].push_back(y1);
+        this->videoData[2].push_back(y2);
+    }
+
+}
+
+void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
+                         const vector<double>& x1, const vector<double>& y1,
+                         const vector<double>& x2, const vector<double>& y2,
+                         const vector<double>& x3, const vector<double>& y3) {
+
+    if(this->action == GNUPLOT_NONE){
+        cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
+        return;
+    }
+
+    if(x0.size() != y0.size()){
+        cout<<"\n\n[ERROR] x0 and y0 must have same dimension.\n\n"<<endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0, "
+                                 "const vector<double>& x1, const vector<double>& y1)");
+    }
+    if(x1.size() != y1.size()){
+        cout<<"\n\n[ERROR] x1 and y1 must have same dimension.\n\n"<<endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0, "
+                                 "const vector<double>& x1, const vector<double>& y1)");
+    }
+    if(x2.size() != y2.size()){
+        cout<<"\n\n[ERROR] x2 and y2 must have same dimension.\n\n"<<endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0, "
+                                 "const vector<double>& x1, const vector<double>& y1, "
+                                 "const vector<double>& x2, const vector<double>& y2)");
+    }
+    if(x3.size() != y3.size()){
+        cout<<"\n\n[ERROR] x3 and y3 must have same dimension.\n\n"<<endl;
+        throw std::runtime_error("void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0, "
+                                 "const vector<double>& x1, const vector<double>& y1, "
+                                 "const vector<double>& x2, const vector<double>& y2, "
+                                 "const vector<double>& x3, const vector<double>& y3)");
+    }
+
+    bool noLegend = false;
+    if (this->legendTitles.empty()) {
+        legendTitles = vector<string>(4);
+        noLegend = true;
+    }
+
+    if(this->action != GNUPLOT_VIDEO) {
+        // creates (tmp) data file
+        ofstream tmp;
+        tmp.open(this->dataFileName, ios::trunc);
+
+        for (int i = 0; i < x0.size(); ++i) {
+            tmp << x0[i] << " " << y0[i] << " " << x1[i] << " " << y1[i] << " " << x2[i] << " " << y2[i] << " " << x3[i] << " " << y3[i] << endl;
+        }
+
+        tmp.close();
+
+        if (noLegend) write_command("set nokey"); // hides legend
+        write_command(
+                "plot \"" + this->dataFileName + "\" u 1:2" + this->plotOptions + getTitle(legendTitles[0]) + ", '' u 3:4" + this->plotOptions + getTitle(legendTitles[1]) + ", '' u 5:6" + this->plotOptions + getTitle(legendTitles[2]) + ", '' u 7:8" + this->plotOptions + getTitle(legendTitles[3]));
+
+        this->commandFile.close();
+
+
+        // execute gnuplot
+        executeGnuplot();
+    }
+    else{
+        if(this->videoData.empty()) this->videoData = vector<vector<vector<double>>>(4);
+        this->videoData[0].push_back(y0);
+        this->videoData[1].push_back(y1);
+        this->videoData[2].push_back(y2);
+        this->videoData[3].push_back(y2);
     }
 
 }
@@ -259,4 +410,10 @@ void GnuplotDriver::executeGnuplot() {
         //main, wait for child
         while ((wpid = wait(&status)) > 0);
     }
+}
+
+void GnuplotDriver::setLegendTitles(const vector<string>& ss){
+
+    this->legendTitles = ss;
+
 }

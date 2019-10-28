@@ -59,7 +59,11 @@ private:
     ofstream commandFile;       /**< \brief  fstream for gnuplot input file **/
     string plotOptions;         /**< \brief set plot options. Default is "with lines" **/
 
+    vector<string> legendTitles;
+
     static vector<vector<vector<double>>> videoData;
+
+    string getTitle(const string& str);
 
 
     /**
@@ -87,8 +91,12 @@ public:
     void setYRange(const double& y0, const double& y1);   /**< \brief sets range for y axis **/
     void setPlotOptions(const string& opts);              /**< \brief i.e. "with lines" **/
 
+    void setLegendTitles(const vector<string>& ss);
+
     void plot(const vector<double>& x, const vector<double>& y);
     void plot(const vector<double>& x0, const vector<double>& y0, const vector<double>& x1, const vector<double>& y1);
+    void plot(const vector<double>& x0, const vector<double>& y0, const vector<double>& x1, const vector<double>& y1, const vector<double>& x2, const vector<double>& y2);
+    void plot(const vector<double>& x0, const vector<double>& y0, const vector<double>& x1, const vector<double>& y1, const vector<double>& x2, const vector<double>& y2, const vector<double>& x3, const vector<double>& y3);
 
     void playAnimation(const vector<double> &x, const double &dt = 0.1);
 
