@@ -22,7 +22,7 @@
 
 using namespace std;
 
-enum gnuplot_action_type{
+enum class gnuplot_action_type{
 
     GNUPLOT_NONE,
     GNUPLOT_PLOT,
@@ -31,10 +31,19 @@ enum gnuplot_action_type{
 
 };
 
-enum gnuplot_save_type{
+enum class gnuplot_save_type{
 
     GNUPLOT_PNG,
     GNUPLOT_EPS
+
+};
+
+enum class gnuplot_axis_type{
+
+   GNUPLOT_LINEAR,
+   GNUPLOT_XLOG,
+   GNUPLOT_YLOG,
+   GNUPLOT_LOGLOG
 
 };
 
@@ -55,6 +64,7 @@ private:
 
     gnuplot_action_type action; /** @todo driver can be called in "plot" mode or "save mode"**/
     gnuplot_save_type saveType; /** \brief if action is GNUPLOT_SAVE plot will be exported in wanted format instead of being displayed**/
+    gnuplot_axis_type axisType;
     string saveName;            /** \brief if action is GNUPLOT_SAVE, file to be exported **/
     ofstream commandFile;       /**< \brief  fstream for gnuplot input file **/
     string plotOptions;         /**< \brief set plot options. Default is "with lines" **/
@@ -81,7 +91,7 @@ private:
     void executeGnuplot();
 
 public:
-    GnuplotDriver(gnuplot_action_type action_type = GNUPLOT_PLOT, string fileName = "plot.png", gnuplot_save_type format = GNUPLOT_PNG);
+    GnuplotDriver(gnuplot_axis_type axis = gnuplot_axis_type::GNUPLOT_LINEAR, gnuplot_action_type action_type = gnuplot_action_type::GNUPLOT_PLOT, string fileName = "plot.png", gnuplot_save_type format = gnuplot_save_type::GNUPLOT_PNG);
     ~GnuplotDriver();
 
     // functions to set gnuplot properties. Must be called before GnuplotDriver::plot
@@ -90,6 +100,7 @@ public:
     void setXRange(const double& x0, const double& x1);   /**< \brief sets range for x axis **/
     void setYRange(const double& y0, const double& y1);   /**< \brief sets range for y axis **/
     void setPlotOptions(const string& opts);              /**< \brief i.e. "with lines" **/
+    void setAxisType(const gnuplot_axis_type& axis);
 
     void setLegendTitles(const vector<string>& ss);
 

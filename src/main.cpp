@@ -30,7 +30,9 @@ int main(){
     plt.plot(tmp,tmp,tmp,tmp1);
 
     // save graph in png format
-    GnuplotDriver save(GNUPLOT_SAVE,"figure.png",GNUPLOT_PNG);
+    GnuplotDriver save(gnuplot_axis_type::GNUPLOT_LINEAR,
+                       gnuplot_action_type::GNUPLOT_SAVE,
+                       "figure.png",gnuplot_save_type::GNUPLOT_PNG);
     save.setTitle("prova");
     save.setTitleFont(20);
     save.plot(tmp,tmp,tmp,tmp1);

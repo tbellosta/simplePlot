@@ -17,10 +17,12 @@
 #include <iostream>
 #include <execinfo.h>
 #include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 vector<vector<vector<double>>> GnuplotDriver::videoData = {};
 
-GnuplotDriver::GnuplotDriver(gnuplot_action_type action_type, string fileName, gnuplot_save_type format) {
+GnuplotDriver::GnuplotDriver(gnuplot_axis_type axis, gnuplot_action_type action_type, string fileName, gnuplot_save_type format) {
 
     this->id = rand();
     this->commandFileName = "/tmp/gnuplotFile" + to_string(this->id) + ".txt";
@@ -32,13 +34,25 @@ GnuplotDriver::GnuplotDriver(gnuplot_action_type action_type, string fileName, g
 
     this->plotOptions = " w l";
 
-    if (fileName == "plot.png" && format == GNUPLOT_EPS) fileName = "plot.eps";
+    if (fileName == "plot.png" && format == gnuplot_save_type::GNUPLOT_EPS) fileName = "plot.eps";
 
     this->saveName = fileName;
     this->saveType = format;
 
-    if(this->action == GNUPLOT_SAVE) write_action_save();
+    if(this->action == gnuplot_action_type::GNUPLOT_SAVE) write_action_save();
 
+    this->axisType = axis;
+    switch (axisType) {
+    case gnuplot_axis_type::GNUPLOT_XLOG:
+      write_command("set logscale x");
+      break;
+    case gnuplot_axis_type::GNUPLOT_YLOG:
+      write_command("set logscale y");
+      break;
+    case gnuplot_axis_type::GNUPLOT_LOGLOG:
+      write_command("set logscale xy");
+      break;
+    }
 }
 
 GnuplotDriver::~GnuplotDriver() {
@@ -90,7 +104,7 @@ string GnuplotDriver::getTitle(const string& str){
 
 void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
 
-    if(this->action == GNUPLOT_NONE){
+    if(this->action == gnuplot_action_type::GNUPLOT_NONE){
         cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
         return;
     }
@@ -106,7 +120,7 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
         noLegend = true;
     }
 
-    if(this->action != GNUPLOT_VIDEO) {
+    if(this->action != gnuplot_action_type::GNUPLOT_VIDEO) {
         // creates (tmp) data file
         ofstream tmp;
         tmp.open(this->dataFileName, ios::trunc);
@@ -135,7 +149,7 @@ void GnuplotDriver::plot(const vector<double> &x, const vector<double> &y) {
 void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
                          const vector<double>& x1, const vector<double>& y1) {
 
-    if(this->action == GNUPLOT_NONE){
+    if(this->action == gnuplot_action_type::GNUPLOT_NONE){
         cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
         return;
     }
@@ -157,7 +171,7 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
         noLegend = true;
     }
 
-    if(this->action != GNUPLOT_VIDEO) {
+    if(this->action != gnuplot_action_type::GNUPLOT_VIDEO) {
         // creates (tmp) data file
         ofstream tmp;
         tmp.open(this->dataFileName, ios::trunc);
@@ -190,7 +204,7 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
                          const vector<double>& x1, const vector<double>& y1,
                          const vector<double>& x2, const vector<double>& y2) {
 
-    if(this->action == GNUPLOT_NONE){
+    if(this->action == gnuplot_action_type::GNUPLOT_NONE){
         cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
         return;
     }
@@ -218,7 +232,7 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
         noLegend = true;
     }
 
-    if(this->action != GNUPLOT_VIDEO) {
+    if(this->action != gnuplot_action_type::GNUPLOT_VIDEO) {
         // creates (tmp) data file
         ofstream tmp;
         tmp.open(this->dataFileName, ios::trunc);
@@ -253,7 +267,7 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
                          const vector<double>& x2, const vector<double>& y2,
                          const vector<double>& x3, const vector<double>& y3) {
 
-    if(this->action == GNUPLOT_NONE){
+    if(this->action == gnuplot_action_type::GNUPLOT_NONE){
         cout << "[WARNING] gnuplot action is set to GNUPLOT_NONE." << endl;
         return;
     }
@@ -288,7 +302,7 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
         noLegend = true;
     }
 
-    if(this->action != GNUPLOT_VIDEO) {
+    if(this->action != gnuplot_action_type::GNUPLOT_VIDEO) {
         // creates (tmp) data file
         ofstream tmp;
         tmp.open(this->dataFileName, ios::trunc);
@@ -322,10 +336,10 @@ void GnuplotDriver::plot(const vector<double>& x0, const vector<double>& y0,
 void GnuplotDriver::write_action_save() {
 
     switch(this->saveType){
-        case GNUPLOT_EPS:
+    case gnuplot_save_type::GNUPLOT_EPS:
             write_command("set term epscairo");
             break;
-        case GNUPLOT_PNG:
+    case gnuplot_save_type::GNUPLOT_PNG:
             write_command("set term png");
             break;
         default:
@@ -339,7 +353,7 @@ void GnuplotDriver::write_action_save() {
 
 void GnuplotDriver::playAnimation(const vector<double> &x, const double &dt) {
 
-    if(this->action != GNUPLOT_VIDEO){
+    if(this->action != gnuplot_action_type::GNUPLOT_VIDEO){
         cout << "[WARNING] calling function GnuplotDriver::playAnimation\n"
                 "but gnuplot action is not set to GNUPLOT_VIDEO." << endl;
         return;
@@ -415,5 +429,10 @@ void GnuplotDriver::executeGnuplot() {
 void GnuplotDriver::setLegendTitles(const vector<string>& ss){
 
     this->legendTitles = ss;
+
+}
+void GnuplotDriver::setAxisType(const gnuplot_axis_type &axis) {
+
+    axisType = axis;
 
 }
