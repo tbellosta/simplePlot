@@ -80,7 +80,7 @@ void GnuplotDriver::setXRange(const double &x0, const double &x1) {
 
 void GnuplotDriver::setYRange(const double &y0, const double &y1) {
 
-    write_command("set xrange [" + to_string(y0) + ":" + to_string(y1) + "]");
+    write_command("set yrange [" + to_string(y0) + ":" + to_string(y1) + "]");
 
 }
 
