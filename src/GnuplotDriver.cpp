@@ -72,6 +72,18 @@ void GnuplotDriver::setTitle(const string &title) {
 
 }
 
+void GnuplotDriver::setXLabel(const string &str, const int& fontSize) {
+
+    write_command("set xlabel \"" + str + "\" font \"," + to_string(fontSize) + "\"");
+
+}
+
+void GnuplotDriver::setYLabel(const string &str, const int& fontSize) {
+
+    write_command("set ylabel \"" + str + "\" font \"," + to_string(fontSize) + "\"");
+
+}
+
 void GnuplotDriver::setXRange(const double &x0, const double &x1) {
 
     write_command("set xrange [" + to_string(x0) + ":" + to_string(x1) + "]");

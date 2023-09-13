@@ -101,6 +101,8 @@ public:
     void setYRange(const double& y0, const double& y1);   /**< \brief sets range for y axis **/
     void setPlotOptions(const string& opts);              /**< \brief i.e. "with lines" **/
     void setAxisType(const gnuplot_axis_type& axis);
+    void setXLabel(const string& str, const int& fontSize = 20);
+    void setYLabel(const string& str, const int& fontSize = 20);
 
     void setLegendTitles(const vector<string>& ss);
 
